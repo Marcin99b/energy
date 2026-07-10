@@ -1,17 +1,31 @@
 package main
 
 import (
+	"log/slog"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 func main() {
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World!"))
-	})
-	http.ListenAndServe(":8000", r)
+	// Echo instance
+	e := echo.New()
+
+	// Middleware
+	e.Use(middleware.RequestLogger()) // use the RequestLogger middleware with slog logger
+	e.Use(middleware.Recover())       // recover panics as errors for proper error handling
+
+	// Routes
+	e.GET("/", hello)
+
+	// Start server
+	if err := e.Start(":8080"); err != nil {
+		slog.Error("failed to start server", "error", err)
+	}
+}
+
+// Handler
+func hello(c *echo.Context) error {
+	return c.String(http.StatusOK, "Hello, World!")
 }
